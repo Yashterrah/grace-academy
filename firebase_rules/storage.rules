@@ -1,0 +1,43 @@
+rules_version = '2';
+
+/**
+ * NOTE: Not currently deployed (see firebase.json) — this project uses
+ * Cloudinary for image uploads instead, since Firebase Storage requires the
+ * paid Blaze plan to enable. These rules are kept here in case you upgrade
+ * to Blaze later and want to switch back to Firebase Storage; just add a
+ * "storage" block back to firebase.json and run:
+ *   firebase deploy --only storage
+ *
+ * Firebase Storage rules for Grace Muigai Music Academy.
+ * Public can upload payment confirmation screenshots (write-only, capped at
+ * 5MB, images only). Public can read gallery/resources. Everything else is
+ * admin-only, matching the Firestore rules' custom-claim pattern.
+ */
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    function isValidImage() {
+      return request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /payment-proofs/{bookingRef}/{fileName} {
+      allow create: if isValidImage();
+      allow read, delete: if isAdmin();
+    }
+
+    match /gallery/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    match /resources/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

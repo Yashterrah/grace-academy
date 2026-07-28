@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    @apply border-ink/10;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-cream-100 font-body text-ink antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+
+  ::selection {
+    @apply bg-gold-200 text-ink;
+  }
+
+  /* Visible, high-contrast focus ring for keyboard users everywhere */
+  :focus-visible {
+    outline: 2px solid #0b4f4a;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  a, button {
+    @apply outline-none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-teal-700 focus:px-4 focus:py-2 focus:text-cream-50;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}

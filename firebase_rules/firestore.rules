@@ -1,0 +1,76 @@
+rules_version = '2';
+
+/**
+ * Firestore security rules for Grace Muigai Music Academy.
+ *
+ * Model: public write-only forms (students/bookings/payments/contactMessages)
+ * so anyone can register, book, and submit payment proof without an account.
+ * Public read-only content (testimonials/gallery/resources) is readable by
+ * everyone but only writable by an authenticated admin. Nothing is editable
+ * or deletable by the public — this protects submitted records from tampering.
+ *
+ * When you build the admin dashboard, sign the admin in with Firebase Auth
+ * and set a custom claim `admin: true` on that account; these rules already
+ * check for it via isAdmin().
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Student registrations — public create, admin manage
+    match /students/{studentId} {
+      allow create: if request.resource.data.keys().hasAll(
+        ['fullName', 'age', 'grade', 'school', 'parentName', 'parentPhone', 'reference']
+      );
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Lesson bookings — public create, admin manage
+    match /bookings/{bookingId} {
+      allow create: if request.resource.data.keys().hasAll(
+        ['studentName', 'studentReference', 'grade', 'fee', 'reference']
+      );
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Payment confirmations — public create (upload proof), admin manage
+    match /payments/{paymentId} {
+      allow create: if request.resource.data.keys().hasAll(
+        ['bookingReference', 'amount', 'proofUrl', 'reference']
+      );
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Contact messages — public create, admin manage
+    match /contactMessages/{messageId} {
+      allow create: if request.resource.data.keys().hasAll(
+        ['name', 'email', 'subject', 'message']
+      );
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Public content — readable by everyone, writable only by admin
+    match /testimonials/{docId} {
+      allow read: if resource.data.approved == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /gallery/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /resources/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

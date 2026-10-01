@@ -1,0 +1,87 @@
+rules_version = '2';
+
+/**
+ * Firestore security rules — Grace Muigai Music Academy.
+ *
+ * isAdmin() = "is anyone signed in". Safe because there is NO public
+ * sign-up anywhere on the site: accounts exist only if created manually in
+ * Firebase Console → Authentication → Add user.
+ *
+ * Server routes that use the Firebase Admin SDK (M-Pesa callback, lookups)
+ * bypass these rules entirely — that is expected.
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null;
+    }
+
+    // ── Public write-only forms ────────────────────────────────────────────
+    match /students/{studentId} {
+      allow create: if request.resource.data.keys().hasAll(
+        ['program', 'fullName', 'age', 'parentName', 'parentPhone', 'reference']
+      );
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /bookings/{bookingId} {
+      allow create: if request.resource.data.keys().hasAll(
+        ['program', 'studentName', 'studentReference', 'fee', 'reference']
+      );
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow create: if request.resource.data.keys().hasAll(
+        ['bookingReference', 'amount', 'proofUrl', 'reference']
+      );
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /contactMessages/{messageId} {
+      allow create: if request.resource.data.keys().hasAll(
+        ['name', 'email', 'subject', 'message']
+      );
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── Assessments & exams — admin only ───────────────────────────────────
+    // Parents never read these directly. When "share with parent" is built
+    // out, expose them through a server route (Admin SDK) that returns only
+    // records where sharedWithParent == true, looked up by student reference.
+    match /assessments/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /holidayExams/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Public content ─────────────────────────────────────────────────────
+    match /testimonials/{docId} {
+      allow read: if resource.data.approved == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /blog/{docId} {
+      allow read: if resource.data.published == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /gallery/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /resources/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

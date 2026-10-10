@@ -13,7 +13,7 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "clsx": "^2.1.1",
-    "firebase": "^10.12.5",
+    "firebase": "^10.14.1",
     "firebase-admin": "^14.2.0",
     "framer-motion": "^11.3.19",
     "lucide-react": "^0.427.0",
